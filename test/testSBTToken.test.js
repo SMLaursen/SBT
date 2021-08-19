@@ -1,5 +1,5 @@
 const MockEUR = artifacts.require('MockEUR');
-const MockUSD = artifacts.require('MockEUR');
+const MockUSD = artifacts.require('MockUSD');
 const MockEURUSDLendingPool = artifacts.require('MockEURUSDLendingPool');
 const MockUSDYieldProtocol = artifacts.require('MockUSDYieldProtocol');
 
@@ -36,8 +36,6 @@ contract("SBTToken", (accounts) => {
         mockUSDInstance.transfer(mockEURUSDLendingPoolInstance.address, web3.utils.toBN("2500000000000000000000"), {from: usdOwner});
     });
 
-        
-
     describe("Tests initial balances", async () => {
         it("Verifies the initial client-euro-balance", async () => {
             let clientEurBalance = await mockEURInstance.balanceOf(clientAcc);
@@ -60,8 +58,6 @@ contract("SBTToken", (accounts) => {
             let clientSBTBalance = await sbtInstance.balanceOf(clientAcc);
             assert(web3.utils.toBN("0").eq(clientSBTBalance), "The balance was "+clientSBTBalance);
 
-            // mockEURInstance.approve(sbtInstance.address, web3.utils.toBN("4000000000000000000000"), {from: usdOwner});
-            // mockEURInstance.transfer(sbtInstance.address, web3.utils.toBN("4000000000000000000000"), {from: usdOwner});
             await mockEURInstance.approve(sbtInstance.address, web3.utils.toBN("4000000000000000000000"), {from: clientAcc});
             await sbtInstance.depositEUR(web3.utils.toBN("4000000000000000000000"), {from: clientAcc});
 
@@ -73,44 +69,22 @@ contract("SBTToken", (accounts) => {
 
         });
     });
-})
 
+    describe("Test lending pool", async () => {
+        it("Verifies the client can borrow USD using EUR as collateral", async () => {
+            clientEurBalance = await mockEURInstance.balanceOf(clientAcc);
+            assert(web3.utils.toBN("6000000000000000000000").eq(clientEurBalance), "The balance was "+clientEurBalance);
+            clientUsdBalance = await mockUSDInstance.balanceOf(clientAcc);
+            assert(web3.utils.toBN("0").eq(clientUsdBalance), "The balance was "+clientUsdBalance);
 
-/* contract("SBTAggregator", (accounts) => {
-    let instance;
-    
-    before(async () => {
-        instance = await SBTAggregator.deployed(); 
-    });
-    
-    describe("Tests initial balance", async () => {
-        it("Verifies the initial balance is zero", async () => {
-            let balance = await instance.getBalance();
-            assert.equal(0, balance, "The balance should be 0");
-        });
+            await mockEURInstance.approve(mockEURUSDLendingPoolInstance.address, web3.utils.toBN("2000000000000000000000"), {from: clientAcc});
+            await mockEURUSDLendingPoolInstance.borrowUSD(web3.utils.toBN("2000000000000000000000"), {from: clientAcc});
+            
+            clientEurBalance = await mockEURInstance.balanceOf(clientAcc);
+            assert(web3.utils.toBN("4000000000000000000000").eq(clientEurBalance), "The balance was "+clientEurBalance);
 
-        it("Verifies getBalance() reflects deposits from accounts[1] and accounts[2]", async () => {
-            let amount = web3.utils.toWei("10", "ether");
-            await instance.sendTransaction({from : accounts[1], value: amount});
-            await instance.sendTransaction({from : accounts[2], value: amount});
-
-            let balance = await instance.getBalance();
-            assert.equal(2 * amount, balance, "The balance should be 20 eth");
-        });
-
-        it("Verifies withdraw function]", async () => {
-            let contractBalanceBefore = await instance.getBalance();
-            let ownerBalanceBefore = await web3.eth.getBalance(accounts[0]);
-
-            await instance.withdraw(contractBalanceBefore, {from : accounts[0]});
-
-            let contractBalanceAfter = await instance.getBalance();
-            let ownerBalanceAfter = await web3.eth.getBalance(accounts[0]);
-
-            assert.equal(0, contractBalanceAfter, "The contract balance should be 0");
-
-            //TODO failint due to gas-fees?
-            assert.equal(contractBalanceBefore, ownerBalanceAfter - ownerBalanceBefore, "The contract balance should've been withdrawn to the owner");
+            clientUsdBalance = await mockUSDInstance.balanceOf(clientAcc);
+            assert(web3.utils.toBN("2000000000000000000000").eq(clientUsdBalance), "The balance was "+clientUsdBalance);
         });
     });
-}); */
+});

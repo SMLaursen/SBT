@@ -1,5 +1,5 @@
 const MockEUR = artifacts.require('MockEUR');
-const MockUSD = artifacts.require('MockEUR');
+const MockUSD = artifacts.require('MockUSD');
 const MockEURUSDLendingPool = artifacts.require('MockEURUSDLendingPool');
 const MockUSDYieldProtocol = artifacts.require('MockUSDYieldProtocol');
 
