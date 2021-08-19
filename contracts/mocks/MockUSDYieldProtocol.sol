@@ -42,7 +42,7 @@ contract MockUSDYieldProtocol is IYieldProtocol, Ownable {
 		_addDeposit(msg.sender, usdAmount);
 	}
 
-	function redeem() external override  {
+	function redeem() external override {
 		uint256 redeemableBalance = balances[msg.sender].usdAmount;
 		require(redeemableBalance > 0);
 
