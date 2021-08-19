@@ -92,30 +92,40 @@ contract("SBTToken", (accounts) => {
 
         it("Verfies the clients utilization correctly reflects the exchange rate", async () => {
             //verify the reported utilization for the client is ~85%
-            let util = await mockEURUSDLendingPoolInstance.getUtilization({from: clientAcc});
+            let util = await mockEURUSDLendingPoolInstance.getUtilization(clientAcc);
             assert.equal(85, util.toNumber())
 
             await mockEURUSDLendingPoolInstance.setEURUSDExchangeRate(BNify(130, 8), {from: lendingPoolOwner})
 
             //204K USD * 1/1.3 => 156.9K EUR worth ~ 156.9/200 ~ 78%
-            util = await mockEURUSDLendingPoolInstance.getUtilization({from: clientAcc});
+            util = await mockEURUSDLendingPoolInstance.getUtilization(clientAcc);
             assert.equal(78, util.toNumber())
 
             await mockEURUSDLendingPoolInstance.setEURUSDExchangeRate(BNify(110, 8), {from: lendingPoolOwner})
 
             //204K USD * 1/1.1 => 185K EUR worth ~ 185/200 ~ 92.5%
-            util = await mockEURUSDLendingPoolInstance.getUtilization({from: clientAcc});
+            util = await mockEURUSDLendingPoolInstance.getUtilization(clientAcc);
             assert.equal(92, util.toNumber())
-
-            await mockEURUSDLendingPoolInstance.setEURUSDExchangeRate(BNify(100, 8), {from: lendingPoolOwner})
-
-            //204K USD * 1/1.0 => 204K EUR worth ~ 204/200 ~ 102% (insolvent: TODO STOPOUT would prevent this)
-            util = await mockEURUSDLendingPoolInstance.getUtilization({from: clientAcc});
-            assert.equal(102, util.toNumber())
         });
 
-  
+        it("Verfies that liquidations reduce positions correctly", async () => {
+            //Trigger a liquidation
+            await mockEURUSDLendingPoolInstance.setEURUSDExchangeRate(BNify(100, 8), {from: lendingPoolOwner})
 
+            //204K USD * 1/1.0 => 204K EUR worth ~ 204/200 ~ 102% so stopout should bring the ratio back to 85%
+            util = await mockEURUSDLendingPoolInstance.getUtilization(clientAcc);
+            assert.equal(85, util.toNumber());
+
+            //But the EUR amount should've been reduced by 17+10(fee)% = 200K * 0.73 = 146K
+            util = await mockEURUSDLendingPoolInstance.getUtilization(clientAcc);
+            let eurCollateral = await mockEURUSDLendingPoolInstance.getCollateralValueEUR(clientAcc);
+            assert(BNify(146000, 18).eq(eurCollateral), "Was "+eurCollateral);
+
+            //And the redeemable usd amount should be 85% of 146K = 124.1K
+            let usdReedemable = await mockEURUSDLendingPoolInstance.getBorrowedValueUSD(clientAcc);
+            assert(BNify(124100, 18).eq(usdReedemable), "Was "+usdReedemable);
+
+        });
     });
 
 });
