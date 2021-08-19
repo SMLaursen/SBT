@@ -13,8 +13,8 @@ contract MockEURUSDLendingPool is ILendingPool, Ownable {
 	mapping(address => uint256) eurCollateral;
 	mapping(address => uint256) borrowedUSDAmount;
 
-	//1.2
-	uint256 exchangeRateEURUSD = 12 * 10**9;
+	//1.20
+	uint256 exchangeRateEURUSD = 120 * 10**8;
 
 	uint8 collateralRatio = 85;
 	uint8 liquidationRatio = 95;
@@ -62,9 +62,14 @@ contract MockEURUSDLendingPool is ILendingPool, Ownable {
 	}
 
 	function getUtilization() external view returns (uint8) {
-		uint256 collateralValueEUR = eurCollateral[msg.sender];
-		uint256 borrowedValueEUR = borrowedUSDAmount[msg.sender] * 10**10 / exchangeRateEURUSD;
+		return uint8(getBorrowedValueUSD() * 100 / getCollateralValueUSD()); 
+	}
 
-		return uint8(borrowedValueEUR * 100 / collateralValueEUR); 
+	function getBorrowedValueUSD() public view returns (uint256) {
+		return borrowedUSDAmount[msg.sender];
+	}
+
+	function getCollateralValueUSD() public view returns (uint256) {
+		return eurCollateral[msg.sender] * exchangeRateEURUSD / 10**10;
 	}
 } 
