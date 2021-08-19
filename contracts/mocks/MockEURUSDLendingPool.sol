@@ -13,7 +13,7 @@ contract MockEURUSDLendingPool is ILendingPool, Ownable {
 	//1.20
 	uint256 private exchangeRateEURUSD = 120 * 10**8;
 
-	uint8 private collateralRatio = 85; //The initial collateral ratio
+	uint8 private collateralRatio = 85; //The collateral ratio
 	uint8 private liquidationRatio = 95; //The liquidation ratio
 	uint8 private liquidationPenalty = 10; //10% collateral as fee on a liquidation
 
@@ -39,8 +39,6 @@ contract MockEURUSDLendingPool is ILendingPool, Ownable {
 			entry.index = borrowersIndex + 1;
 		}
 	}
-
-
 
     constructor (IERC20 eurInstance, IERC20 usdInstance) Ownable(){
 		_eurInstance = eurInstance; 
