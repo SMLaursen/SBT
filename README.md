@@ -17,6 +17,10 @@ Whereafter the test-suite can be executed using
 truffle test
 ```
 
+This has been verified using 
+* Truffle v5.4.6
+* Ganache CLI v6.12.2 (ganache-core: 2.13.2)
+
 ## Motivational Example
 Suppose a EUR based client wants to engage in DeFi protocols to generate yield. Currently most yield producing protocols rely on USD-based stablecoins, essentially requiring the client to trade his EUR to USD beforehand. This leaves the client exposed to the currencyrisk of the EURUSD exchangerate at the time of withdrawal.
  
