@@ -45,8 +45,8 @@ contract MockEURUSDLendingPool is ILendingPool, Ownable {
 		_usdInstance = usdInstance;
 	}
 
- 	function setEURUSDExchangeRate(uint256 _exchangeRate) external onlyOwner{
-        exchangeRateEURUSD = _exchangeRate;
+ 	function setEURUSDExchangeRate(uint256 exchangeRate) external override onlyOwner{
+        exchangeRateEURUSD = exchangeRate;
 		_checkLiquidations();
     }
 
@@ -69,7 +69,7 @@ contract MockEURUSDLendingPool is ILendingPool, Ownable {
 		}
 	}
 
-	function borrowUSD(uint256 eurAmount) external {
+	function borrowUSD(uint256 eurAmount) external override  {
 		Loan memory entry = loans[msg.sender];
 		require(entry.borrowedUSDAmount == 0, "You already have a loan");
 		_eurInstance.transferFrom(msg.sender, address(this), eurAmount);
@@ -82,7 +82,7 @@ contract MockEURUSDLendingPool is ILendingPool, Ownable {
 		_setLoan(msg.sender, eurAmount, usdAmount);
 	}
 
-	function redeemEUR() external {
+	function redeemEUR() external override  {
 		Loan memory entry = loans[msg.sender];
 		require(entry.borrowedUSDAmount > 0, "You don't have any loans");
 

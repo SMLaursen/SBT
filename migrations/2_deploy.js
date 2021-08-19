@@ -3,11 +3,11 @@ const MockUSD = artifacts.require('MockUSD');
 const MockEURUSDLendingPool = artifacts.require('MockEURUSDLendingPool');
 const MockUSDYieldProtocol = artifacts.require('MockUSDYieldProtocol');
 
-const SBTToken = artifacts.require('SBTToken');
+const MarketRiskMitigator = artifacts.require('MarketRiskMitigator');
 
 module.exports = async function(deployer, network, accounts) {
     if (network == "development") {
-        let SBTOwner = accounts[0];
+        let MRMOwner = accounts[0];
         let eurOwner = accounts[1];
         let usdOwner = accounts[2];
         let lendingPoolOwner = accounts[3];
@@ -20,7 +20,7 @@ module.exports = async function(deployer, network, accounts) {
         await deployer.deploy(MockEURUSDLendingPool, MockEUR.address, MockUSD.address, {from: lendingPoolOwner}); 
         await deployer.deploy(MockUSDYieldProtocol, MockUSD.address, {from: yieldProtocolOwner}); 
     
-        await deployer.deploy(SBTToken, MockEUR.address, MockUSD.address, MockEURUSDLendingPool.address, MockUSDYieldProtocol.address, {from: SBTOwner});
+        await deployer.deploy(MarketRiskMitigator, MockEUR.address, MockUSD.address, MockEURUSDLendingPool.address, MockUSDYieldProtocol.address, {from: MRMOwner});
     } else {
         throw "NOT SUPPORTED!"
     }

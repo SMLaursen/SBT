@@ -37,12 +37,12 @@ contract MockUSDYieldProtocol is IYieldProtocol, Ownable {
 		_usdInstance = usdInstance;
 	}
 
-	function deposit(uint256 usdAmount) external {
+	function deposit(uint256 usdAmount) external override {
 		_usdInstance.transferFrom(msg.sender, address(this), usdAmount);
 		_addDeposit(msg.sender, usdAmount);
 	}
 
-	function redeem() external {
+	function redeem() external override  {
 		uint256 redeemableBalance = balances[msg.sender].usdAmount;
 		require(redeemableBalance > 0);
 
@@ -59,7 +59,7 @@ contract MockUSDYieldProtocol is IYieldProtocol, Ownable {
 		return balances[adr].usdAmount;
 	}
 
-	/** Test function to generate yield every time invoked */
+	/** Test function to generate yield to the SmartContract every time invoked */
 	function generateYield(uint8 apy) external onlyOwner {
 		uint256 currentBalance =_usdInstance.balanceOf(address(this));
 		uint256 mint = currentBalance * apy / 100;
@@ -73,7 +73,7 @@ contract MockUSDYieldProtocol is IYieldProtocol, Ownable {
 			uint256 ratio = balances[adr].usdAmount * 100 / currentTotalInvestment;
 			_addDeposit(adr, ratio * mint / 100);
 		}
-		
-		require(currentTotalInvestment + mint == totalInvestment);
+
+		require(currentTotalInvestment + mint == totalInvestment, "Sanity error - the old balance + mint should equal the new balance");
 	}
 }
