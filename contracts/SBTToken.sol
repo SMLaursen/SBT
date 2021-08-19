@@ -22,7 +22,7 @@ contract SBTToken is ERC20, Ownable {
 		_yieldProtocolInstance = YieldProtocol;
 	}
 
-	function depositEUR(uint256 _amount) external{
+	function depositEUR(uint256 _amount) external {
 		//Depositer needs to have this transfer approved
 		_eurInstance.transferFrom(msg.sender, address(this), _amount);
 

@@ -5,8 +5,6 @@ const MockUSDYieldProtocol = artifacts.require('MockUSDYieldProtocol');
 
 const SBTToken = artifacts.require('SBTToken');
 
-const BNify = n => new BN(String(n));
-
 module.exports = async function(deployer, network, accounts) {
     if (network == "development") {
         let SBTOwner = accounts[0];

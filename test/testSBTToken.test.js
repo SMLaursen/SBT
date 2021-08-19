@@ -73,7 +73,7 @@ contract("SBTToken", (accounts) => {
     describe("Test lending pool", async () => {
         it("Verifies the client can borrow USD using EUR as collateral", async () => {
             clientEurBalance = await mockEURInstance.balanceOf(clientAcc);
-            assert(web3.utils.toBN("6000000000000000000000").eq(clientEurBalance), "The balance was "+clientEurBalance);
+            assert(web3.utils.toBN("6000000000000000000000").eq(clientEurBalance), "The balance was "+clientEurBalance); 
             clientUsdBalance = await mockUSDInstance.balanceOf(clientAcc);
             assert(web3.utils.toBN("0").eq(clientUsdBalance), "The balance was "+clientUsdBalance);
 
@@ -83,8 +83,14 @@ contract("SBTToken", (accounts) => {
             clientEurBalance = await mockEURInstance.balanceOf(clientAcc);
             assert(web3.utils.toBN("4000000000000000000000").eq(clientEurBalance), "The balance was "+clientEurBalance);
 
+            //200K EUR * 1.2 (EURUSD) * 0.85 (CollateralRatio) = 204K USD
             clientUsdBalance = await mockUSDInstance.balanceOf(clientAcc);
-            assert(web3.utils.toBN("2000000000000000000000").eq(clientUsdBalance), "The balance was "+clientUsdBalance);
+            assert(web3.utils.toBN("2040000000000000000000").eq(clientUsdBalance), "The balance was "+clientUsdBalance);
+
+            //verify the reported utilization for the client is ~85%
+            let util = await mockEURUSDLendingPoolInstance.getUtilization({from: clientAcc});
+            assert.equal(85, util.toNumber());
+
         });
     });
 });
