@@ -67,10 +67,13 @@ contract MockUSDYieldProtocol is IYieldProtocol, Ownable {
 
 		require(_usdInstance.balanceOf(address(this)) == currentBalance+mint);
 
+		uint256 currentTotalInvestment = totalInvestment;
 		for(uint8 i = 0; i < depositors.length; i++){
 			address adr = depositors[i];
-			uint256 ratio = balances[adr].usdAmount * 100 / totalInvestment;
+			uint256 ratio = balances[adr].usdAmount * 100 / currentTotalInvestment;
 			_addDeposit(adr, ratio * mint / 100);
 		}
+		
+		require(currentTotalInvestment + mint == totalInvestment);
 	}
 }
