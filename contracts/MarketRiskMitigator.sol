@@ -9,15 +9,17 @@ import './interfaces/ILendingPool.sol';
 import './interfaces/IYieldProtocol.sol';
 import './interfaces/IDEX.sol';
 
+// Tracks client deposits and hedges EUR to USD using a lending pool and a DEX. The resulting USD is placed in the yield protocol
+// The MRM tracks the lendings pools utilization ratio and the Yield protocols accrued interest to rebalance (and hedge) accordingly 
 contract MarketRiskMitigator is Ownable {
-    IERC20 _eurInstance;
-	IERC20 _usdInstance;
+ 	IERC20 private _eurInstance;
+	IERC20 private _usdInstance;
 
-	ILendingPool _lendingPoolInstance;
-	IYieldProtocol _yieldProtocolInstance;
-	IDEX _dexInstance;
+	ILendingPool private _lendingPoolInstance;
+	IYieldProtocol private _yieldProtocolInstance;
+	IDEX private _dexInstance;
 
-	uint256 pooledEURDeposits = 0;
+	uint256 private pooledEURDeposits = 0;
 
 	struct Deposit {
 		uint8 index;
@@ -35,6 +37,8 @@ contract MarketRiskMitigator is Ownable {
 		_dexInstance = dex;
 	}
 
+	/** Deposits fund in MRM pool. 
+	The transfer needs to be approved beforehand*/ 
 	function depositEUR(uint256 amount) external {
 		_redeemFundsToEUR();
 		_distributePnL();
@@ -46,9 +50,14 @@ contract MarketRiskMitigator is Ownable {
 		_allocateFunds();
 	}
 
+
+	/** Redeems the callers share in EUR*/ 
 	function redeemEUR() external {
 		uint256 redeemableBalance = balances[msg.sender].eurAmount;
-		require(redeemableBalance > 0, "Nothing to redeem");
+		if(redeemableBalance == 0){
+			//Nothing to redeem
+			return;
+		}
 
 		_redeemFundsToEUR();
 		_distributePnL();
@@ -64,10 +73,15 @@ contract MarketRiskMitigator is Ownable {
 		_allocateFunds();
 	}
 
+	/** The owner of this contract is expected to call this function at regular intervals.
+		Triggers rebalance when : 
+		a) utilization imbalances in the lending protocol of 3% or more is detected 
+		b) More than 5% of the USD amount in the yield protocol is unhedged in the lending pool
+	*/ 
 	function check() external onlyOwner {		
-		//Check lending pool is within +/- 5% of the optimum
+		//Check lending pool is within +/- 3% of the optimum
 		uint8 currentUtil = _lendingPoolInstance.getUtilization(address(this));
-		bool isUtilizationOK = currentUtil > 80 && currentUtil < 90;
+		bool isUtilizationOK = currentUtil > 82 && currentUtil < 88;
 
 		//Check that at most 5% of the USD position may remain unhedged 
 		uint256 usdBalance = _yieldProtocolInstance.balanceOf(address(this));
@@ -84,12 +98,15 @@ contract MarketRiskMitigator is Ownable {
 		_rebalance();
 	}
 
+	// Simplified rebalance function that settles everything to eur and reinvest the pool
+	// This could be greatly improved by tracking deltas instead
 	function _rebalance() internal onlyOwner {
 		_redeemFundsToEUR();
 		_distributePnL();
 		_allocateFunds();
 	}
 
+	//Redeems everything to EUR
 	function _redeemFundsToEUR() internal {
 		_yieldProtocolInstance.redeem();
 		
@@ -99,7 +116,7 @@ contract MarketRiskMitigator is Ownable {
 			_lendingPoolInstance.redeemEUR();
 		}
 
-		//Trade lefterover USD (from e.g. yields and liquidations) to EUR
+		//Trade lefterover USD (from e.g. yields and) to EUR
 		uint256 remainingUSD = _usdInstance.balanceOf(address(this));
 		if(remainingUSD > 0){
 			_usdInstance.approve(address(_dexInstance), remainingUSD);
@@ -107,6 +124,7 @@ contract MarketRiskMitigator is Ownable {
 		}
 	}
 
+	//Adjusts the client balances propertionally according to the current SCs holdings
 	function _distributePnL() internal {
 		if(pooledEURDeposits == 0){
 			return;
@@ -128,6 +146,7 @@ contract MarketRiskMitigator is Ownable {
 		pooledEURDeposits = pooledEURDeposits * pnlRatio / 1000000;
 	}
 
+	//Borrows USD for the entire EUR-balance and places all the USD in the yield protocol
 	function _allocateFunds() internal {
 		//Trade any residual USD to EUR
 		uint256 idleUsd = _usdInstance.balanceOf(address(this));

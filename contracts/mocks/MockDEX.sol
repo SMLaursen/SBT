@@ -7,6 +7,7 @@ import '../mocks/MockUSD.sol';
 import '../mocks/MockEUR.sol';
 import '../interfaces/IDEX.sol';
 
+//MockedDEX that can trade EUR to USD and vice-versa
 contract MockDEX is IDEX, Ownable {
 	MockUSD private _usdInstance;
 	MockEUR private _eurInstance;

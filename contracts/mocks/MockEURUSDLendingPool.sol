@@ -6,6 +6,7 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 import '../interfaces/ILendingPool.sol';
 
+//Mocked EUR to USD lending pool that may perform liquidations by retaining the full collateral if the liqudation ratio is met 
 contract MockEURUSDLendingPool is ILendingPool, Ownable {
     IERC20 private _eurInstance;
 	IERC20 private _usdInstance;

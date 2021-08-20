@@ -3,6 +3,7 @@ pragma solidity ^0.8.7 <0.9.0;
 
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 
+//MockedUSD token that can be minted and burned at will
 contract MockUSD is ERC20 {
     constructor() ERC20("MockUSDToken", "USD"){
        

@@ -7,6 +7,7 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '../interfaces/IYieldProtocol.sol';
 import '../mocks/MockUSD.sol';
 
+//Mocked Yield pool that distributes redeemable yield when generateYield(ratio) is called  
 contract MockUSDYieldProtocol is IYieldProtocol, Ownable {
 	MockUSD private _usdInstance;
 	uint256 private totalInvestment = 0;
@@ -23,11 +24,15 @@ contract MockUSDYieldProtocol is IYieldProtocol, Ownable {
 		_usdInstance = usdInstance;
 	}
 
+	/** Deposits funds in the yield protocol. 
+	The transfer needs to be approved beforehand*/ 
 	function deposit(uint256 usdAmount) external override {
 		_usdInstance.transferFrom(msg.sender, address(this), usdAmount);
 		_addDeposit(msg.sender, usdAmount);
 	}
 
+	/** Deposits funds in the yield protocol. 
+	The transfer needs to be approved beforehand*/ 
 	function redeem() external override {
 		uint256 redeemableBalance = balances[msg.sender].usdAmount;
 		//Nothing to redeem
@@ -44,6 +49,7 @@ contract MockUSDYieldProtocol is IYieldProtocol, Ownable {
 		totalInvestment-=redeemableBalance;
 	}
 
+	/** Returns the balance deposited for generating yield*/ 
 	function balanceOf(address adr) external override view returns(uint256){
 		return balances[adr].usdAmount;
 	}
