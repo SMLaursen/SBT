@@ -26,20 +26,6 @@ contract MockEURUSDLendingPool is ILendingPool, Ownable {
 	mapping(address => Loan) internal loans;
 	address[] internal borrowers;
 
-	function _setLoan(address _address, uint256 _eurCollateral, uint256 _usdBorrowed) internal {
-		Loan storage entry = loans[_address];
-		entry.eurCollateral = _eurCollateral;
-		entry.borrowedUSDAmount = _usdBorrowed;
-		if(entry.index > 0){
-			// entry exists : do nothing
-			return;
-		} else {
-			borrowers.push(_address);
-			uint8 borrowersIndex = uint8(borrowers.length - 1);
-			entry.index = borrowersIndex + 1;
-		}
-	}
-
     constructor (IERC20 eurInstance, IERC20 usdInstance) Ownable(){
 		_eurInstance = eurInstance; 
 		_usdInstance = usdInstance;
@@ -49,25 +35,6 @@ contract MockEURUSDLendingPool is ILendingPool, Ownable {
         exchangeRateEURUSD = exchangeRate;
 		_checkLiquidations();
     }
-
-	/** liquidates positions that have exceeded the liquidation ratio. 
-	  	A liquidation removes the redemmable collateral back to the collateral ratio + a liquidation penalty and sets the redeemable USD amount accordingly.
-	  */
-	function _checkLiquidations() internal onlyOwner {
-		for(uint8 i=0; i < borrowers.length; i++ ){
-			address adr = borrowers[i];
-			if(getUtilization(adr) > liquidationRatio){
-				uint8 liquidation = getUtilization(adr) - collateralRatio + liquidationPenalty;
-				Loan storage entry = loans[adr];
-				entry.eurCollateral = entry.eurCollateral - (entry.eurCollateral * liquidation / 100);
-				uint256 borrowedUSDAmountBefore = entry.borrowedUSDAmount;
-				entry.borrowedUSDAmount = entry.eurCollateral * exchangeRateEURUSD / 10**10 * collateralRatio / 100;
-
-				require(getUtilization(adr) <= liquidationRatio, "Sanity error - liqudation should've reduced the utilization!");
-				require(borrowedUSDAmountBefore > entry.borrowedUSDAmount, "Sanity error - the redeemable USD amount should've been reduced!");
-			}
-		}
-	}
 
 	function borrowUSD(uint256 eurAmount) external override  {
 		Loan memory entry = loans[msg.sender];
@@ -97,23 +64,70 @@ contract MockEURUSDLendingPool is ILendingPool, Ownable {
 		_setLoan(msg.sender, 0, 0);
 	}
 
-	function getUtilization(address adr) public view returns (uint8) {
-		return uint8(getBorrowedValueUSD(adr) * 100 / getCollateralValueUSD(adr)); 
+	function getUtilization(address adr) external override view returns (uint8) {
+		return _getUtilization(adr);
 	}
 
-	function getBorrowedValueUSD(address adr) public view returns (uint256) {
+    function getBorrowedUSD(address adr) external override view returns (uint256) {
+		return _getBorrowedValueUSD(adr);
+	}
+
+    function getCollateralizedEUR(address adr) external override view returns (uint256) {
+		return _getCollateralValueEUR(adr);
+	}
+
+	//Internal helper functions : 
+	function _setLoan(address _address, uint256 _eurCollateral, uint256 _usdBorrowed) internal {
+		Loan storage entry = loans[_address];
+		entry.eurCollateral = _eurCollateral;
+		entry.borrowedUSDAmount = _usdBorrowed;
+		if(entry.index > 0){
+			// entry exists : do nothing
+			return;
+		} else {
+			borrowers.push(_address);
+			uint8 borrowersIndex = uint8(borrowers.length - 1);
+			entry.index = borrowersIndex + 1;
+		}
+	}
+	
+	/** liquidates positions that have exceeded the liquidation ratio. 
+	  	A liquidation removes the redemmable collateral back to the collateral ratio + a liquidation penalty and sets the redeemable USD amount accordingly.
+	  */
+	function _checkLiquidations() internal onlyOwner {
+		for(uint8 i=0; i < borrowers.length; i++ ){
+			address adr = borrowers[i];
+			if(_getUtilization(adr) > liquidationRatio){
+				uint8 liquidation = _getUtilization(adr) - collateralRatio + liquidationPenalty;
+				Loan storage entry = loans[adr];
+				entry.eurCollateral = entry.eurCollateral - (entry.eurCollateral * liquidation / 100);
+				uint256 borrowedUSDAmountBefore = entry.borrowedUSDAmount;
+				entry.borrowedUSDAmount = entry.eurCollateral * exchangeRateEURUSD / 10**10 * collateralRatio / 100;
+
+				require(_getUtilization(adr) <= liquidationRatio, "Sanity error - liqudation should've reduced the utilization!");
+				require(borrowedUSDAmountBefore > entry.borrowedUSDAmount, "Sanity error - the redeemable USD amount should've been reduced!");
+			}
+		}
+	}
+
+	function _getUtilization(address adr) internal view returns (uint8) {
+		return uint8(_getBorrowedValueUSD(adr) * 100 / _getCollateralValueUSD(adr)); 
+	}
+
+	function _getBorrowedValueUSD(address adr) internal view returns (uint256) {
 		return loans[adr].borrowedUSDAmount;
 	}
 
-	function getBorrowedValueEUR(address adr) public view returns (uint256) {
+	function _getBorrowedValueEUR(address adr) internal view returns (uint256) {
 		return loans[adr].borrowedUSDAmount * 10**10 / exchangeRateEURUSD;
 	}
 
-	function getCollateralValueUSD(address adr) public view returns (uint256) {
+	function _getCollateralValueUSD(address adr) internal view returns (uint256) {
 		return loans[adr].eurCollateral * exchangeRateEURUSD / 10**10;
 	}
 
-	function getCollateralValueEUR(address adr) public view returns (uint256) {
+	function _getCollateralValueEUR(address adr) internal view returns (uint256) {
 		return loans[adr].eurCollateral;
 	}
+
 } 

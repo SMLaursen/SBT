@@ -19,6 +19,10 @@ contract MockUSDYieldProtocol is IYieldProtocol, Ownable {
 	mapping(address => Deposit) internal balances;
 	address[] internal depositors;
 
+    constructor (MockUSD usdInstance) Ownable(){
+		_usdInstance = usdInstance;
+	}
+
 	function _addDeposit(address _address, uint256 _usdAmount) internal {
 		Deposit storage entry = balances[_address];
 		entry.usdAmount += _usdAmount;
@@ -31,10 +35,6 @@ contract MockUSDYieldProtocol is IYieldProtocol, Ownable {
 			uint8 depositerIndex = uint8(depositors.length - 1);
 			entry.index = depositerIndex + 1;
 		}
-	}
-
-    constructor (MockUSD usdInstance) Ownable(){
-		_usdInstance = usdInstance;
 	}
 
 	function deposit(uint256 usdAmount) external override {

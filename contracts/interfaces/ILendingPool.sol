@@ -8,4 +8,11 @@ interface ILendingPool {
     function borrowUSD(uint256 eurAmount) external;
 
     function redeemEUR() external;    
+
+    function getUtilization(address add) external view returns (uint8);
+
+    function getBorrowedUSD(address add) external view returns (uint256);
+
+    function getCollateralizedEUR(address add) external view returns (uint256);
+
 }

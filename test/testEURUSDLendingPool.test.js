@@ -76,11 +76,11 @@ contract("MockEURUSDLendingPool", (accounts) => {
 
             //But the EUR amount should've been reduced by 17+10(fee)% = 200K * 0.73 = 146K
             util = await mockEURUSDLendingPoolInstance.getUtilization(clientAcc);
-            let eurCollateral = await mockEURUSDLendingPoolInstance.getCollateralValueEUR(clientAcc);
+            let eurCollateral = await mockEURUSDLendingPoolInstance.getCollateralizedEUR(clientAcc);
             assert(BNify(146000, 18).eq(eurCollateral), "Was "+eurCollateral);
 
             //And the redeemable usd amount should be 85% of 146K = 124.1K
-            let usdReedemable = await mockEURUSDLendingPoolInstance.getBorrowedValueUSD(clientAcc);
+            let usdReedemable = await mockEURUSDLendingPoolInstance.getBorrowedUSD(clientAcc);
             assert(BNify(124100, 18).eq(usdReedemable), "Was "+usdReedemable);
 
             //But it shouldn't affect the clients current USD holding

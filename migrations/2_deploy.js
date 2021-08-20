@@ -15,8 +15,6 @@ module.exports = async function(deployer, network, accounts) {
         let yieldProtocolOwner = accounts[4];
         let dexOwner = accounts[5];
 
-        let clientAcc = accounts[9];
-
         await deployer.deploy(MockEUR, {from: eurOwner});
         await deployer.deploy(MockUSD, {from: usdOwner});
         await deployer.deploy(MockEURUSDLendingPool, MockEUR.address, MockUSD.address, {from: lendingPoolOwner}); 
