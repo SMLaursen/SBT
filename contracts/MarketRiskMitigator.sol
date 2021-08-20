@@ -113,19 +113,19 @@ contract MarketRiskMitigator is Ownable {
 		}
 
 		uint256 eurBalance = _eurInstance.balanceOf(address(this));
-		uint256 pnlRatio = eurBalance * 1000 / pooledEURDeposits;
+		uint256 pnlRatio = eurBalance * 1000000 / pooledEURDeposits;
 		
 		//No need to do anything
-		if(pnlRatio == 1000){
+		if(pnlRatio == 1000000){
 			return;
 		}
 
 		//Distribute PnL to depositors
 		for(uint8 i = 0; i < depositors.length; i++){
 			Deposit storage entry = balances[depositors[i]];
-			entry.eurAmount = entry.eurAmount * pnlRatio / 1000;
+			entry.eurAmount = entry.eurAmount * pnlRatio / 1000000;
 		}
-		pooledEURDeposits = pooledEURDeposits * pnlRatio / 1000;
+		pooledEURDeposits = pooledEURDeposits * pnlRatio / 1000000;
 	}
 
 	function _allocateFunds() internal {

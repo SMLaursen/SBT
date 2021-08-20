@@ -156,37 +156,38 @@ contract("MarketRiskMitigator", (accounts) => {
             assert(BNify(1_170_000, 18).eq(clientEurBalance), "The balance was "+clientEurBalance);
         });
 
-        // it("Verifies bookkeeping for two accounts", async () => {
-        //     await mockEURInstance.approve(mrmInstance.address, BNify(1_000_000, 18), {from: clientAcc});
-        //     await mrmInstance.depositEUR(BNify(1_000_000, 18), {from: clientAcc});
+        it("Verifies unhegded residuals are distributed to the clients at the current market rate", async () => {
+            //Set EURUSD to 1.20
+            await mockEURUSDLendingPoolInstance.setEURUSDExchangeRate(BNify(120, 8), {from: lendingPoolOwner});
+            await dexInstance.setEURUSDExchangeRate(BNify(120, 8), {from: dexOwner});
+            await mrmInstance.check({from: mrmOwner});
 
-        //     let clientAcc2 = accounts[8];
-        //     await mockEURInstance.mint(BNify(500_000, 18), {from: clientAcc2});
-        //     await mockEURInstance.approve(mrmInstance.address, BNify(500_000, 18), {from: clientAcc2});
-        //     await mrmInstance.depositEUR(BNify(500_000, 18), {from: clientAcc2});
+            await mockEURInstance.approve(mrmInstance.address, BNify(1_000_000, 18), {from: clientAcc});
+            await mrmInstance.depositEUR(BNify(1_000_000, 18), {from: clientAcc});
 
-        //     //Then EURUSD increases from 1.20 to 1.30 - triggering a rebalance
-        //     await mockEURUSDLendingPoolInstance.setEURUSDExchangeRate(BNify(130, 8), {from: lendingPoolOwner});
-        //     await dexInstance.setEURUSDExchangeRate(BNify(130, 8), {from: dexOwner});
-        //     await mrmInstance.check({from: mrmOwner});
+            //Then 1% yield is generated and the market moves from 1.20 to 1.22
+            await mockUSDYieldProtocolInstance.generateYield(1, {from: yieldProtocolOwner});
+            await mockEURUSDLendingPoolInstance.setEURUSDExchangeRate(BNify(122, 8), {from: lendingPoolOwner});
+            await dexInstance.setEURUSDExchangeRate(BNify(122, 8), {from: dexOwner});
+            await mrmInstance.check({from: mrmOwner});
+
+            //Verify it doesn't trigger a rebalance
+            borrowedUSD = await mockEURUSDLendingPoolInstance.getBorrowedUSD(mrmInstance.address);
+            assert(BNify(1_020_000, 18).eq(borrowedUSD), "The borrowed USD balance was "+borrowedUSD)
             
-        //     //10% yield is generated
-        //     await mockUSDYieldProtocolInstance.generateYield(10, {from: yieldProtocolOwner});
+            collateralizedEUR = await mockEURUSDLendingPoolInstance.getCollateralizedEUR(mrmInstance.address);
+            assert(BNify(1_000_000, 18).eq(collateralizedEUR), "The collateralized EUR balance was "+collateralizedEUR);
 
-        //    //Then EURUSD falls back to 1.20 - triggering a rebalance
-        //    await mockEURUSDLendingPoolInstance.setEURUSDExchangeRate(BNify(120, 8), {from: lendingPoolOwner});
-        //    await dexInstance.setEURUSDExchangeRate(BNify(120, 8), {from: dexOwner});
-        //    await mrmInstance.check({from: mrmOwner});
-            
-        //    //Again 10% yield is generated
-        //    await mockUSDYieldProtocolInstance.generateYield(10, {from: yieldProtocolOwner});
-            
-        //    //ClientAcc2 redeems his share which should be worth (500 * 0.85 * 1.10) * 1.10
-        //    await mrmInstance.redeemEUR({from: clientAcc2});
-        //    clientEurBalance = await mockEURInstance.balanceOf(clientAcc2);
-        //    assert(BNify(514_200, 18).eq(clientEurBalance), "The balance was "+clientEurBalance);
-        // });
+            yieldProtocolBalance = await mockUSDYieldProtocolInstance.balanceOf(mrmInstance.address);
+            //Borrowed USD + 1% in yield
+            assert(BNify(1_030_200, 18).eq(yieldProtocolBalance), "The yieldProtocol USD balance was "+yieldProtocolBalance);
+       
+            await mrmInstance.redeemEUR({from: clientAcc});
 
+            clientEurBalance = await mockEURInstance.balanceOf(clientAcc);
+
+            //The 10_200 USD residual is traded to EUR at the current market price (1.22) = 8360EUR
+            assert(BNify(1_178_360, 18).eq(clientEurBalance), "The balance was "+clientEurBalance);
+        });
     });
-
 });
