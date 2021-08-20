@@ -111,7 +111,12 @@ contract MockEURUSDLendingPool is ILendingPool, Ownable {
 	}
 
 	function _getUtilization(address adr) internal view returns (uint8) {
-		return uint8(_getBorrowedValueUSD(adr) * 100 / _getCollateralValueUSD(adr)); 
+		uint256 collateral = _getCollateralValueUSD(adr);
+		if(collateral == 0){
+			require(_getBorrowedValueUSD(adr) == 0, "Sanity Error - no collateral but borrowed amount");
+			return 0;
+		}
+		return uint8(_getBorrowedValueUSD(adr) * 100 / collateral); 
 	}
 
 	function _getBorrowedValueUSD(address adr) internal view returns (uint256) {

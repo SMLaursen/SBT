@@ -64,13 +64,17 @@ contract MarketRiskMitigator is Ownable {
 		_allocateFunds();
 	}
 
-	function check() external onlyOwner {
+	function check() external onlyOwner {		
 		//Check lending pool is within +/- 5% of the optimum
 		uint8 currentUtil = _lendingPoolInstance.getUtilization(address(this));
 		bool isUtilizationOK = currentUtil > 80 && currentUtil < 90;
 
 		//Check that at most 5% of the USD position may remain unhedged 
 		uint256 usdBalance = _yieldProtocolInstance.balanceOf(address(this));
+		if(currentUtil == 0 && usdBalance == 0){
+			return;
+		}
+
 		uint256 borrowedAmount = _lendingPoolInstance.getBorrowedUSD(address(this));
 		bool isEURSufficientlyHedged = borrowedAmount * 100 / usdBalance > 95;  
 		
