@@ -6,4 +6,6 @@ interface IYieldProtocol {
     function deposit(uint256 usdAmount) external;
     
     function redeem() external;
+
+    function balanceOf(address adr) external view returns (uint256);
 }

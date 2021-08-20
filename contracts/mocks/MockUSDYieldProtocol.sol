@@ -23,20 +23,6 @@ contract MockUSDYieldProtocol is IYieldProtocol, Ownable {
 		_usdInstance = usdInstance;
 	}
 
-	function _addDeposit(address _address, uint256 _usdAmount) internal {
-		Deposit storage entry = balances[_address];
-		entry.usdAmount += _usdAmount;
-		totalInvestment += _usdAmount;
-		if(entry.index > 0){
-			// entry exists : do nothing
-			return;
-		} else {
-			depositors.push(_address);
-			uint8 depositerIndex = uint8(depositors.length - 1);
-			entry.index = depositerIndex + 1;
-		}
-	}
-
 	function deposit(uint256 usdAmount) external override {
 		_usdInstance.transferFrom(msg.sender, address(this), usdAmount);
 		_addDeposit(msg.sender, usdAmount);
@@ -44,7 +30,10 @@ contract MockUSDYieldProtocol is IYieldProtocol, Ownable {
 
 	function redeem() external override {
 		uint256 redeemableBalance = balances[msg.sender].usdAmount;
-		require(redeemableBalance > 0);
+		//Nothing to redeem
+		if(redeemableBalance == 0){
+			return;
+		}
 
 		_usdInstance.approve(address(this), redeemableBalance);
 		_usdInstance.transfer(msg.sender, redeemableBalance);
@@ -55,7 +44,7 @@ contract MockUSDYieldProtocol is IYieldProtocol, Ownable {
 		totalInvestment-=redeemableBalance;
 	}
 
-	function getBalanceOf(address adr) external view returns(uint256){
+	function balanceOf(address adr) external override view returns(uint256){
 		return balances[adr].usdAmount;
 	}
 
@@ -75,5 +64,19 @@ contract MockUSDYieldProtocol is IYieldProtocol, Ownable {
 		}
 
 		require(currentTotalInvestment + mint == totalInvestment, "Sanity error - the old balance + mint should equal the new balance");
+	}
+
+	function _addDeposit(address _address, uint256 _usdAmount) internal {
+		Deposit storage entry = balances[_address];
+		entry.usdAmount += _usdAmount;
+		totalInvestment += _usdAmount;
+		if(entry.index > 0){
+			// entry exists : do nothing
+			return;
+		} else {
+			depositors.push(_address);
+			uint8 depositerIndex = uint8(depositors.length - 1);
+			entry.index = depositerIndex + 1;
+		}
 	}
 }

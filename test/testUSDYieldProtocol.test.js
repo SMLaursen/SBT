@@ -39,10 +39,10 @@ contract("MockUSDYieldProtocol", (accounts) => {
             client2UsdBalance = await mockUSDInstance.balanceOf(clientAcc2);
             assert(BNify(600_000, 18).eq(client2UsdBalance), "The balance was "+client2UsdBalance);
 
-            client1UsdBalance = await mockUSDYieldProtocolInstance.getBalanceOf(clientAcc1);
+            client1UsdBalance = await mockUSDYieldProtocolInstance.balanceOf(clientAcc1);
             assert(BNify(600_000, 18).eq(client1UsdBalance), "The balance was "+client1UsdBalance);
             
-            client2UsdBalance = await mockUSDYieldProtocolInstance.getBalanceOf(clientAcc2);
+            client2UsdBalance = await mockUSDYieldProtocolInstance.balanceOf(clientAcc2);
             assert(BNify(400_000, 18).eq(client2UsdBalance), "The balance was "+client2UsdBalance);
         });
 
@@ -55,10 +55,10 @@ contract("MockUSDYieldProtocol", (accounts) => {
             client2UsdBalance = await mockUSDInstance.balanceOf(clientAcc2);
             assert(BNify(600_000, 18).eq(client2UsdBalance), "The balance was "+client2UsdBalance);
 
-            client1UsdBalance = await mockUSDYieldProtocolInstance.getBalanceOf(clientAcc1);
+            client1UsdBalance = await mockUSDYieldProtocolInstance.balanceOf(clientAcc1);
             assert(BNify(660_000, 18).eq(client1UsdBalance), "The balance was "+client1UsdBalance);
 
-            client2UsdBalance = await mockUSDYieldProtocolInstance.getBalanceOf(clientAcc2);
+            client2UsdBalance = await mockUSDYieldProtocolInstance.balanceOf(clientAcc2);
             assert(BNify(440_000, 18).eq(client2UsdBalance), "The balance was "+client2UsdBalance);
         });
 
@@ -68,13 +68,13 @@ contract("MockUSDYieldProtocol", (accounts) => {
             client1UsdBalance = await mockUSDInstance.balanceOf(clientAcc1);
             assert(BNify(1_060_000, 18).eq(client1UsdBalance), "The balance was "+client1UsdBalance);
 
-            client1UsdBalance = await mockUSDYieldProtocolInstance.getBalanceOf(clientAcc1);
+            client1UsdBalance = await mockUSDYieldProtocolInstance.balanceOf(clientAcc1);
             assert(BNify(0, 18).eq(client1UsdBalance), "The balance was "+client1UsdBalance);
 
             client2UsdBalance = await mockUSDInstance.balanceOf(clientAcc2);
             assert(BNify(600_000, 18).eq(client2UsdBalance), "The balance was "+client2UsdBalance);
 
-            client2UsdBalance = await mockUSDYieldProtocolInstance.getBalanceOf(clientAcc2);
+            client2UsdBalance = await mockUSDYieldProtocolInstance.balanceOf(clientAcc2);
             assert(BNify(440_000, 18).eq(client2UsdBalance), "The balance was "+client2UsdBalance);
         });
 
@@ -84,13 +84,13 @@ contract("MockUSDYieldProtocol", (accounts) => {
             client1UsdBalance = await mockUSDInstance.balanceOf(clientAcc1);
             assert(BNify(1_060_000, 18).eq(client1UsdBalance), "The balance was "+client1UsdBalance);
 
-            client1UsdBalance = await mockUSDYieldProtocolInstance.getBalanceOf(clientAcc1);
+            client1UsdBalance = await mockUSDYieldProtocolInstance.balanceOf(clientAcc1);
             assert(BNify(0, 18).eq(client1UsdBalance), "The balance was "+client1UsdBalance);
 
             client2UsdBalance = await mockUSDInstance.balanceOf(clientAcc2);
             assert(BNify(600_000, 18).eq(client2UsdBalance), "The balance was "+client2UsdBalance);
 
-            client2UsdBalance = await mockUSDYieldProtocolInstance.getBalanceOf(clientAcc2);
+            client2UsdBalance = await mockUSDYieldProtocolInstance.balanceOf(clientAcc2);
             assert(BNify(462_000, 18).eq(client2UsdBalance), "The balance was "+client2UsdBalance);
         });
 

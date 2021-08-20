@@ -43,12 +43,12 @@ contract MarketRiskMitigator is Ownable {
 		_eurInstance.transferFrom(msg.sender, address(this), amount);
 		_addDeposit(msg.sender, amount);
 
-		_rebalanceFunds();
+		_allocateFunds();
 	}
 
 	function redeemEUR() external {
 		uint256 redeemableBalance = balances[msg.sender].eurAmount;
-		require(redeemableBalance > 0);
+		require(redeemableBalance > 0, "Nothing to redeem");
 
 		_redeemFundsToEUR();
 		_distributePnL();
@@ -61,54 +61,70 @@ contract MarketRiskMitigator is Ownable {
 		entry.eurAmount = 0;
 		pooledEURDeposits-=redeemableBalance;
 
-		_rebalanceFunds();
+		_allocateFunds();
 	}
 
 	function check() external onlyOwner {
-		//TODO check utilization of lending pool within 5%
-		//TODO check current hedge is within 5%
+		//Check lending pool is within +/- 5% of the optimum
+		uint8 currentUtil = _lendingPoolInstance.getUtilization(address(this));
+		bool isUtilizationOK = currentUtil > 80 && currentUtil < 90;
+
+		//Check that at most 5% of the USD position may remain unhedged 
+		uint256 usdBalance = _yieldProtocolInstance.balanceOf(address(this));
+		uint256 borrowedAmount = _lendingPoolInstance.getBorrowedUSD(address(this));
+		bool isEURSufficientlyHedged = borrowedAmount * 100 / usdBalance > 95;  
+		
+		if(isUtilizationOK && isEURSufficientlyHedged){
+			return;
+		}
 		_rebalance();
 	}
 
 	function _rebalance() internal onlyOwner {
 		_redeemFundsToEUR();
 		_distributePnL();
-		_rebalanceFunds();
+		_allocateFunds();
 	}
 
 	function _redeemFundsToEUR() internal {
 		_yieldProtocolInstance.redeem();
 		
 		uint256 borrowedUSD = _lendingPoolInstance.getBorrowedUSD(address(this));
-		_usdInstance.approve(address(_lendingPoolInstance), borrowedUSD);
-		_lendingPoolInstance.redeemEUR();
+		if(borrowedUSD > 0){
+			_usdInstance.approve(address(_lendingPoolInstance), borrowedUSD);
+			_lendingPoolInstance.redeemEUR();
+		}
 
 		//Trade lefterover USD (from e.g. yields) to EUR
-		uint256 leftoverUSD = _usdInstance.balanceOf(address(this));
-		if(leftoverUSD > 0){
-			_usdInstance.approve(address(_dexInstance), leftoverUSD);
-			_dexInstance.tradeUSDtoEUR(leftoverUSD);
+		uint256 remainingUSD = _usdInstance.balanceOf(address(this));
+		if(remainingUSD > 0){
+			_usdInstance.approve(address(_dexInstance), remainingUSD);
+			_dexInstance.tradeUSDtoEUR(remainingUSD);
 		}
 	}
 
 	function _distributePnL() internal {
+		if(pooledEURDeposits == 0){
+			return;
+		}
+
 		uint256 eurBalance = _eurInstance.balanceOf(address(this));
-		uint256 pnlRatio = eurBalance * 100 / pooledEURDeposits;
+		uint256 pnlRatio = eurBalance * 1000 / pooledEURDeposits;
 		
 		//No need to do anything
-		if(pnlRatio == 100){
+		if(pnlRatio == 1000){
 			return;
 		}
 
 		//Distribute PnL to depositors
 		for(uint8 i = 0; i < depositors.length; i++){
 			Deposit storage entry = balances[depositors[i]];
-			entry.eurAmount = entry.eurAmount * pnlRatio / 100;
+			entry.eurAmount = entry.eurAmount * pnlRatio / 1000;
 		}
-		pooledEURDeposits = pooledEURDeposits * pnlRatio / 100;
+		pooledEURDeposits = pooledEURDeposits * pnlRatio / 1000;
 	}
 
-	function _rebalanceFunds() internal {
+	function _allocateFunds() internal {
 		//Trade any residual USD to EUR
 		uint256 idleUsd = _usdInstance.balanceOf(address(this));
 		if(idleUsd > 0){
@@ -127,7 +143,7 @@ contract MarketRiskMitigator is Ownable {
 			idleUsd = _usdInstance.balanceOf(address(this));
 			require(idleUsd > 0, "Sanity Error");
 
-			_usdInstance.approve(address(_lendingPoolInstance), idleEur);
+			_usdInstance.approve(address(_yieldProtocolInstance), idleUsd);
 			_yieldProtocolInstance.deposit(idleUsd);
 		}
 	}
