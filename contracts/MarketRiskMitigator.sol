@@ -99,7 +99,7 @@ contract MarketRiskMitigator is Ownable {
 			_lendingPoolInstance.redeemEUR();
 		}
 
-		//Trade lefterover USD (from e.g. yields) to EUR
+		//Trade lefterover USD (from e.g. yields and liquidations) to EUR
 		uint256 remainingUSD = _usdInstance.balanceOf(address(this));
 		if(remainingUSD > 0){
 			_usdInstance.approve(address(_dexInstance), remainingUSD);

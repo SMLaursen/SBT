@@ -38,14 +38,14 @@ contract("MarketRiskMitigator", (accounts) => {
         //Lets put 1M EUR token in the clientAcc 
         await mockEURInstance.mint(BNify(1_000_000, 18), {from: clientAcc});
 
-        //Bootstrap the DEX with 1M EUR and USD tokens 
-        await mockUSDInstance.mint(BNify(1_000_000, 18), {from: usdOwner});
-        await mockUSDInstance.approve(dexInstance.address, BNify(1_000_000, 18), {from: usdOwner});
-        await mockUSDInstance.transfer(dexInstance.address, BNify(1_000_000, 18), {from: usdOwner});
+        //Bootstrap the DEX with 2M EUR and USD tokens 
+        await mockUSDInstance.mint(BNify(2_000_000, 18), {from: usdOwner});
+        await mockUSDInstance.approve(dexInstance.address, BNify(2_000_000, 18), {from: usdOwner});
+        await mockUSDInstance.transfer(dexInstance.address, BNify(2_000_000, 18), {from: usdOwner});
 
-        await mockEURInstance.mint(BNify(1_000_000, 18), {from: eurOwner});
-        await mockEURInstance.approve(dexInstance.address, BNify(1_000_000, 18), {from: eurOwner});
-        await mockEURInstance.transfer(dexInstance.address, BNify(1_000_000, 18), {from: eurOwner});
+        await mockEURInstance.mint(BNify(2_000_000, 18), {from: eurOwner});
+        await mockEURInstance.approve(dexInstance.address, BNify(2_000_000, 18), {from: eurOwner});
+        await mockEURInstance.transfer(dexInstance.address, BNify(2_000_000, 18), {from: eurOwner});
 
         //Bootstrap the Lending Pool with 2M USD 
         await mockUSDInstance.mint(BNify(2_000_000, 18), {from: usdOwner});
@@ -59,10 +59,10 @@ contract("MarketRiskMitigator", (accounts) => {
             assert(BNify(1_000_000, 18).eq(clientEurBalance), "The balance was "+clientEurBalance);
 
             let dexUSDBalance = await mockUSDInstance.balanceOf(dexInstance.address)
-            assert(BNify(1_000_000, 18).eq(dexUSDBalance));
+            assert(BNify(2_000_000, 18).eq(dexUSDBalance));
 
             let dexEURBalance = await mockEURInstance.balanceOf(dexInstance.address)
-            assert(BNify(1_000_000, 18).eq(dexEURBalance));
+            assert(BNify(2_000_000, 18).eq(dexEURBalance));
             
             let lendingPoolUSDBalance = await mockUSDInstance.balanceOf(mockEURUSDLendingPoolInstance.address)
             assert(BNify(2_000_000, 18).eq(lendingPoolUSDBalance));
@@ -188,6 +188,36 @@ contract("MarketRiskMitigator", (accounts) => {
 
             //The 10_200 USD residual is traded to EUR at the current market price (1.22) = 8360EUR
             assert(BNify(1_178_360, 18).eq(clientEurBalance), "The balance was "+clientEurBalance);
+
+            //Make the client go back to 1M
+            await mockEURInstance.approve(eurOwner, BNify(178_360, 18), {from: clientAcc});
+            await mockEURInstance.transfer(eurOwner, BNify(178_360, 18), {from: clientAcc});
+
+            clientEurBalance = await mockEURInstance.balanceOf(clientAcc);
+            assert(BNify(1_000_000, 18).eq(clientEurBalance), "The balance was "+clientEurBalance);
         });
+
+        it("Verifies MRM bookkeeping on lending pool liquidations", async () => {
+            //Set EURUSD to 1.20
+            await mockEURUSDLendingPoolInstance.setEURUSDExchangeRate(BNify(120, 8), {from: lendingPoolOwner});
+            await dexInstance.setEURUSDExchangeRate(BNify(120, 8), {from: dexOwner});
+            await mrmInstance.check({from: mrmOwner});
+
+            //Deposit 1M EUR to MRM
+            await mockEURInstance.approve(mrmInstance.address, BNify(1_000_000, 18), {from: clientAcc});
+            await mrmInstance.depositEUR(BNify(1_000_000, 18), {from: clientAcc});
+
+            //Set EURUSD to 1.10 triggering a liquidation
+            await mockEURUSDLendingPoolInstance.setEURUSDExchangeRate(BNify(110, 8), {from: lendingPoolOwner});
+            await dexInstance.setEURUSDExchangeRate(BNify(110, 8), {from: dexOwner});
+
+            await mrmInstance.redeemEUR({from: clientAcc});
+
+            //The client should now be left with
+            //1M EUR -(1.20)-> 1.02M USD -(1.10) -> 927_273EUR
+            clientEurBalance = await mockEURInstance.balanceOf(clientAcc);
+            assert(BNify(927_273, 18).eq(clientEurBalance), "The balance was "+clientEurBalance);
+        });
+
     });
 });

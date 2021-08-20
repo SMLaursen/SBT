@@ -14,8 +14,7 @@ contract MockEURUSDLendingPool is ILendingPool, Ownable {
 	uint256 private exchangeRateEURUSD = 120 * 10**8;
 
 	uint8 private collateralRatio = 85; //The collateral ratio
-	uint8 private liquidationRatio = 95; //The liquidation ratio
-	uint8 private liquidationPenalty = 10; //10% collateral as fee on a liquidation
+	uint8 private liquidationRatio = 90; //The liquidation ratio (the remaining >= 10% is kept as profits by the pool)
 
 	struct Loan {
 		uint8 index;
@@ -92,20 +91,14 @@ contract MockEURUSDLendingPool is ILendingPool, Ownable {
 	}
 	
 	/** liquidates positions that have exceeded the liquidation ratio. 
-	  	A liquidation removes the redemmable collateral back to the collateral ratio + a liquidation penalty and sets the redeemable USD amount accordingly.
+	  	A liquidation removes the redemmable collateral back to the collateral ratio - a liquidation penalty and sets the redeemable USD amount accordingly.
 	  */
 	function _checkLiquidations() internal onlyOwner {
 		for(uint8 i=0; i < borrowers.length; i++ ){
 			address adr = borrowers[i];
+			//The pools keeps the money between 90% and 100% - anything over 100% means the pool looses money as it didn't liquidate fast enough
 			if(_getUtilization(adr) > liquidationRatio){
-				uint8 liquidation = _getUtilization(adr) - collateralRatio + liquidationPenalty;
-				Loan storage entry = loans[adr];
-				entry.eurCollateral = entry.eurCollateral - (entry.eurCollateral * liquidation / 100);
-				uint256 borrowedUSDAmountBefore = entry.borrowedUSDAmount;
-				entry.borrowedUSDAmount = entry.eurCollateral * exchangeRateEURUSD / 10**10 * collateralRatio / 100;
-
-				require(_getUtilization(adr) <= liquidationRatio, "Sanity error - liqudation should've reduced the utilization!");
-				require(borrowedUSDAmountBefore > entry.borrowedUSDAmount, "Sanity error - the redeemable USD amount should've been reduced!");
+				_setLoan(adr, 0, 0);
 			}
 		}
 	}
