@@ -1,4 +1,4 @@
-# MRM
+# Market Risk Mitigator
 MRM is a PoC of how to autonomously hedge market risks onchain using a lending pool and a DEX when engaging in foregin currency denominated yield protocols.
 
 ## Installation
