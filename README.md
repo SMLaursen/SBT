@@ -67,9 +67,9 @@ Notice the rebalancing relies on MRM being able to withdraw from the Yield Proto
 * Client A deposits 1M EUR to MRM
     * MRM borrows 1.02M USD (1M * 1.20 * 0.85) using the EUR as collateral  
     * MRM deposits 1.02M USD in the Yield Protocol
-* EURUSD rate changes to 1.22
+* EURUSD rate changes to 1.22 (In both DEX and Lending Pool)
 * Yield Protocol generates 10% yield (1,122,000 USD)
-* Offchain oracle calls MRMs check() triggering a rebalnce  
+* Offchain oracle calls MRMs `check()` triggering a rebalance  
     * MRM redeems the 1,122,000 USD from the yield protocol
     * MRM redeems the 1M EUR using the 1.02M USD
     * MRM trades the remaining 102K USD to 83.6K EUR using the DEX
