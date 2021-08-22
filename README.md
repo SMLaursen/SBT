@@ -38,7 +38,7 @@ Another way to achieve onchain hedging could be to buy perpetual futures on a DE
 The stablecoins, lending pool, DEX and yield protocol has all been mocked to ease the testing. Future work includes integrating to real tokens as well as dex, lending pool and yield protocols.
 
 ### Mocked Tokens
-EUR and USD has been mocked as ERC20 tokens, see [MockEUR.sol](https://github.com/SMLaursen/SBT/blob/main/contracts/mocks/MockEUR.sol) and [MockUSD.sol](https://github.com/SMLaursen/SBT/blob/main/contracts/mocks/MockUSD.sol respectively
+EUR and USD has been mocked as ERC20 tokens, see [MockEUR.sol](https://github.com/SMLaursen/SBT/blob/main/contracts/mocks/MockEUR.sol) and [MockUSD.sol](https://github.com/SMLaursen/SBT/blob/main/contracts/mocks/MockUSD.sol) respectively
 
 ### Mocked DEX
 A simplified DEX has been mocked, see [MockDEX.sol](https://github.com/SMLaursen/SBT/blob/main/contracts/mocks/MockDEX.sol). This DEX allows trading EUR to USD and vice versa at an exchangerate set by a contract owner's offchain oracle. 
