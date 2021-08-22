@@ -37,6 +37,8 @@ Another way to achieve onchain hedging could be to buy perpetual futures on a DE
 ## Technical Architecture
 The stablecoins, lending pool, DEX and yield protocol has all been mocked to ease the testing. Future work includes integrating to real tokens as well as dex, lending pool and yield protocols.
 
+![Diagram](https://user-images.githubusercontent.com/7354598/130348655-98624f6d-e529-491a-a103-7efe6e183191.png)
+
 ### Mocked Tokens
 EUR and USD has been mocked as ERC20 tokens, see [MockEUR.sol](https://github.com/SMLaursen/SBT/blob/main/contracts/mocks/MockEUR.sol) and [MockUSD.sol](https://github.com/SMLaursen/SBT/blob/main/contracts/mocks/MockUSD.sol) respectively
 
@@ -45,6 +47,8 @@ A simplified DEX has been mocked, see [MockDEX.sol](https://github.com/SMLaursen
 
 ### Mocked Lending Pool
 See [MockEURUSDLendingPool.sol](https://github.com/SMLaursen/SBT/blob/main/contracts/mocks/MockEURUSDLendingPool.sol) which is a simplified lending pool, that allows borrowing USD using EUR as collateral and relies on a contract owner's offchain oracle to set the exchangerate. The healtfactor is set to 0.85 where liquidations will happen if the ratio exceeds 0.90 effectively emulating the liquidation fee. Notice if the healtfactor exceeds 1.00, the client will actually profit from being liquidated, as the borrowed value would exceed his collateral value. In this mock theres no incentives for providing liquidity to the pool as well as there is no ongoing interest charged the borrower. 
+
+The 0.85 health/collateral-factor has been synthesized from the following [pool proposal](https://vote.rari.capital/#/rari/proposal/QmNSdAEikbD9cz9wued9xK4ZQMcoCJfP8o4eSJVpvfFTV2)
 
 ### Mocked Yield Protocol
 See [MockUSDYieldProtocol.sol](https://github.com/SMLaursen/SBT/blob/main/contracts/mocks/MockUSDYieldProtocol.sol) which is a simplified yield protocol used for testing by minting and distributing yield when called from an outside oracle. 
