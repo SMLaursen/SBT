@@ -64,5 +64,6 @@ Relying on ERC20 based EUR and USD tokens enforces us to preapprove the relevant
 * Attempt to interact with real 3rd party lending pools, DEXs and yield protocol.
 * Take spreads and liquidity into consideration when interacting with the DEX
 * Model interest rates in the lending pool, and take these into consideration when interacting with it.
-* Improve the MRM bookkeeping to only rebalance the necessary delta
+* Make support for partial liquidations in the lending pool
+* Improve the MRM bookkeeping to only rebalance what's necessary, instead of rebalancing everything
 * ...
