@@ -54,7 +54,7 @@ The 0.85 health/collateral-factor has been synthesized from the following [pool 
 See [MockUSDYieldProtocol.sol](https://github.com/SMLaursen/SBT/blob/main/contracts/mocks/MockUSDYieldProtocol.sol) which is a simplified yield protocol used for testing by minting and distributing yield when called from an outside oracle. 
 
 ### Market Risk Mitigator
-The [MRM contract](https://github.com/SMLaursen/SBT/blob/main/contracts/MarketRiskMitigator.sol) integrates to the Lending Pool, DEX and Yield protocol. It functions by pooling EUR tokens from its clients and placing them in the lending pool as collateral for borrowing USD tokens. The USD tokens are then deposited in a yield protocol to earn interest that is redeemable via the MRM contract. The contract owner's offchain oracle ensure that MRM constantly `check()` whether the healthfactor is more than 3% outside its target range (due to price movements) or whether more than 5% of the USD under management is unredeemable in the lending pool (due to accrued yield or lending pool liquidations removing collateral), and thereby essentially having USD unhedged. If so the MRM contract rebalances it's funds. 
+The [MRM contract](https://github.com/SMLaursen/SBT/blob/main/contracts/MarketRiskMitigator.sol) integrates to the Lending Pool, DEX and Yield protocol. It functions by pooling EUR tokens from its clients and placing them in the lending pool as collateral for borrowing USD tokens. The USD tokens are then deposited in a yield protocol to earn interest that is redeemable via the MRM contract. The contract owner's offchain oracle ensure that MRM constantly `check()` whether the healthfactor is more than 3% outside its target range (due to price movements) or whether more than 5% of the USD under management is unredeemable in the lending pool (due to accrued yield or lending pool liquidations removing collateral), and thereby essentially having USD unhedged. If so the MRM contract rebalances it's funds.
 
 In this rather crude PoC the rebalancing is made by redeeming everything from the yield protocol then repaying the entire loan to get EUR. Any residual USD (from unbalanced yield or liquidations) is also traded to EUR whereafter the EUR is placed anew after registrering the clients individual PnLs. 
 
@@ -81,7 +81,7 @@ Notice the rebalancing relies on MRM being able to withdraw from the Yield Proto
     * MRM redeems the 1,083,600 EUR using the 1,123,700M USD
     * MRM transfers the 1,083,600 EUR to the clientt
 
-Had the client interacted directly with the DEX and the yield protocol, he would've exchanged his 1M EUR to 1.20M USD (@1.20) - where the 10% yield would bring his balance to 1.32M USD. As at the time of withdrawal the EURUSD exchange rate is 1.22, his 1.32M USD would be worth 1,082,000 EUR.
+Had the client interacted directly with the DEX and the yield protocol, he would've exchanged his 1M EUR to 1.20M USD (@1.20) - where the 10% yield would bring his balance to 1.32M USD. As at the time of withdrawal the EURUSD exchange rate is 1.22, his 1.32M USD would've been exchanged for 1,082,000 EUR.
 
 This example along with many other have been modelled as test-cases in [testMRM.test.js](https://github.com/SMLaursen/SBT/blob/main/test/testMRM.test.js)
 
