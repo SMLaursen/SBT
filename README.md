@@ -62,6 +62,29 @@ Client withdrawals and deposits also triggers full rebalances to ensure the PnL 
 
 Notice the rebalancing relies on MRM being able to withdraw from the Yield Protocol, this may not always be the case with e.g. locked staking 
 
+### Example
+* Assume EURUSD rate is 1.20
+* Client A deposits 1M EUR to MRM
+    * MRM borrows 1.02M USD (1M * 1.20 * 0.85) using the EUR as collateral  
+    * MRM deposits 1.02M USD in the Yield Protocol
+* EURUSD rate changes to 1.22
+* Yield Protocol generates 10% yield (1,122,000 USD)
+* Offchain oracle calls MRMs check() triggering a rebalnce  
+    * MRM redeems the 1,122,000 USD from the yield protocol
+    * MRM redeems the 1M EUR using the 1.02M USD
+    * MRM trades the remaining 102K USD to 83.6K EUR using the DEX
+    * MRM distributes PnL internally (Client A's balance is set to 1,083,600 EUR)
+    * MRM borrows 1,123,700M USD (1,083,600 * 1.22 * 0.85) using the EUR as collateral  
+    * MRM deposits 1,123,700M USD in the Yield Protocol
+* Client A withdraws
+    * MRM redeems the 1,123,700M USD from the yield protocol
+    * MRM redeems the 1,083,600 EUR using the 1,123,700M USD
+    * MRM transfers the 1,083,600 EUR to the clientt
+
+Had the client interacted directly with the DEX and the yield protocol, he would've exchanged his 1M EUR to 1.20M USD (@1.20) - where the 10% yield would bring his balance to 1.32M USD. As at the time of withdrawal the EURUSD exchange rate is 1.22, his 1.32M USD would be worth 1,082,000 EUR.
+
+This example along with many other have been modelled as test-cases in [testMRM.test.js](https://github.com/SMLaursen/SBT/blob/main/test/testMRM.test.js)
+
 ## Security
 This is no way battletested!
 Relying on ERC20 based EUR and USD tokens enforces us to preapprove the relevant transactions and using the Ownable modifier helps in preventing unauthorized access.
