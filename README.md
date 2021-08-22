@@ -56,13 +56,15 @@ In this rather crude PoC the rebalancing is made by redeeming everything from th
 
 Client withdrawals and deposits also triggers full rebalances to ensure the PnL is correctly recorded for the other clients before adjusting the EUR position. 
 
+Notice the rebalancing relies on MRM being able to withdraw from the Yield Protocol, this may not always be the case with e.g. locked staking 
+
 ## Security
 This is no way battletested!
 Relying on ERC20 based EUR and USD tokens enforces us to preapprove the relevant transactions and using the Ownable modifier helps in preventing unauthorized access.
 
 ## Further work
 * Attempt to interact with real 3rd party lending pools, DEXs and yield protocol.
-* Take spreads and liquidity into consideration when interacting with the DEX
+* Take spreads and potential lack of liquidity into consideration when interacting with the DEX
 * Model interest rates in the lending pool, and take these into consideration when interacting with it.
 * Make support for partial liquidations in the lending pool
 * Improve the MRM bookkeeping to only rebalance what's necessary, instead of rebalancing everything
