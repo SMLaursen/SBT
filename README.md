@@ -88,7 +88,7 @@ This example along with many other have been modelled as test-cases in [testMRM.
 ## Security
 This is no way battletested!
 Relying on ERC20 based EUR and USD tokens enforces us to preapprove the relevant transactions and using the Ownable modifier helps in preventing unauthorized access.
-Principially having everything onchain grants us atomicity, such that the client's deposit is only accepted if it ultimatly ends up generating yield in the yield protocol.
+Making the clients deposit/withdraw actions trigger an atomic rebalance ultimatly placing his fund directly in the yield pool, if accepted, mitigates issues that would lead to client deposits idling in any of the contracts.
 
 ## Further work
 * Attempt to interact with real 3rd party lending pools, DEXs and yield protocol.
