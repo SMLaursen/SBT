@@ -22,7 +22,7 @@ This has been verified using
 * Ganache CLI v6.12.2 (ganache-core: 2.13.2)
 
 ## Core concept
-Suppose a EUR based client wants to engage in DeFi protocols to generate yield. Currently, most yield producing protocols rely on USD-based stablecoins, essentially requiring the client to trade his EUR to USD beforehand. This leaves the client exposed to the currencyrisk of the EURUSD exchangerate at the time of withdrawal assuming he didn't constantly maintained an offchain hedge according to the accrued yield. 
+Suppose a EUR based client wants to engage in DeFi protocols to generate yield. Currently, most yield producing protocols rely on USD-based stablecoins, essentially requiring the client to trade his EUR to USD. This leaves the client exposed to the market risk of the EURUSD exchangerate at the time of withdrawal (assuming he didn't maintained an offchain hedge according to the accrued yield). 
  
 This PoC demonstrates how to autonomously hedge such risks onchain using a EURUSD lending pool and a DEX, where the idea is to let MRM monitor and rebalance the lending pool to keep its healtfactor constant while ensuring that every USD handled by the yield protocol can be redeemed for EUR. The later point is achieved by using the DEX to trade USD-based yield back to EUR that in turn is used as collateral to borrow USD to place in the yield protocol.
 
