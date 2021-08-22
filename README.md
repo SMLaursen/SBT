@@ -54,9 +54,9 @@ The 0.85 health/collateral-factor has been synthesized from the following [pool 
 See [MockUSDYieldProtocol.sol](https://github.com/SMLaursen/SBT/blob/main/contracts/mocks/MockUSDYieldProtocol.sol) which is a simplified yield protocol used for testing by minting and distributing yield when called from an outside oracle. 
 
 ### Market Risk Mitigator
-The [MRM contract](https://github.com/SMLaursen/SBT/blob/main/contracts/MarketRiskMitigator.sol) integrates to the Lending Pool, DEX and Yield protocol. It functions by pooling EUR tokens from its clients and placing them in the lending pool as collateral for borrowing USD tokens. The USD tokens are then deposited in a yield protocol to earn interest that is redeemable via the MRM contract. The contract owner's offchain oracle ensure that MRM constantly `check()` whether the healthfactor is more than 3% outside its target range (due to price movements) or whether more than 5% of the USD under management is unredeemable in the lending pool (due to yield or lending pool liquidations removing collateral), and thereby essentially unhedged. If so the MRM contract rebalances it's funds. 
+The [MRM contract](https://github.com/SMLaursen/SBT/blob/main/contracts/MarketRiskMitigator.sol) integrates to the Lending Pool, DEX and Yield protocol. It functions by pooling EUR tokens from its clients and placing them in the lending pool as collateral for borrowing USD tokens. The USD tokens are then deposited in a yield protocol to earn interest that is redeemable via the MRM contract. The contract owner's offchain oracle ensure that MRM constantly `check()` whether the healthfactor is more than 3% outside its target range (due to price movements) or whether more than 5% of the USD under management is unredeemable in the lending pool (due to accrued yield or lending pool liquidations removing collateral), and thereby essentially having USD unhedged. If so the MRM contract rebalances it's funds. 
 
-In this rather crude PoC the rebalancing is made by redeeming everything from the yield protocol then repaying the entire loan to get EUR. Any residual USD is also traded to EUR whereafter the EUR is placed anew after registrering the clients individual PnLs. 
+In this rather crude PoC the rebalancing is made by redeeming everything from the yield protocol then repaying the entire loan to get EUR. Any residual USD (from unbalanced yield or liquidations) is also traded to EUR whereafter the EUR is placed anew after registrering the clients individual PnLs. 
 
 Client withdrawals and deposits also triggers full rebalances to ensure the PnL is correctly recorded for the other clients before adjusting the EUR position. 
 
@@ -91,7 +91,7 @@ Relying on ERC20 based EUR and USD tokens enforces us to preapprove the relevant
 
 ## Further work
 * Attempt to interact with real 3rd party lending pools, DEXs and yield protocol.
-* Take spreads and potential lack of liquidity into consideration when interacting with the DEX
+* Take spreads and potential lack of liquidity into consideration when interacting with the DEX and Lending Pool
 * Model interest rates in the lending pool, and take these into consideration when interacting with it.
 * Make support for partial liquidations in the lending pool
 * Improve the MRM bookkeeping to only rebalance what's necessary, instead of rebalancing everything
