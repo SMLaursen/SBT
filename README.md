@@ -21,50 +21,48 @@ This has been verified using
 * Truffle v5.4.6
 * Ganache CLI v6.12.2 (ganache-core: 2.13.2)
 
-## Motivational Example
-Suppose a EUR based client wants to engage in DeFi protocols to generate yield. Currently most yield producing protocols rely on USD-based stablecoins, essentially requiring the client to trade his EUR to USD beforehand. This leaves the client exposed to the currencyrisk of the EURUSD exchangerate at the time of withdrawal.
+## Core concept
+Suppose a EUR based client wants to engage in DeFi protocols to generate yield. Currently, most yield producing protocols rely on USD-based stablecoins, essentially requiring the client to trade his EUR to USD beforehand. This leaves the client exposed to the currencyrisk of the EURUSD exchangerate at the time of withdrawal assuming he didn't constantly maintained an offchain hedge according to the accrued yield. 
  
-This PoC demonstrates how one can hedge such risks using a lending pool that is constantly rebalanced to reflect the current exchangerate and prevent (costly) liquidations. 
+This PoC demonstrates how to autonomously hedge such risks onchain using a EURUSD lending pool and a DEX, where the idea is to let MRM monitor and rebalance the lending pool to keep its healtfactor constant while ensuring that every USD handled by the yield protocol can be redeemed for EUR. The later point is achieved by using the DEX to trade USD-based yield back to EUR that in turn is used as collateral to borrow USD to place in the yield protocol.
 
-Suppose a clients deposits 1M euro to engage in yield farming, then MRM could use this as collateral to borrow 1.02M USD (assuming an exchange rate of 1.20 and collateralization ratio of 0.85) and put these in a yield farming product. If the rate of EURUSD increases, we borrow additional USD to allocate the yield farming. If the rate of EURUSD decreases, we redeem some of the USD to EUR collateral, to ensure we don't lose our liquidity in the lending pool due to liquidations. Any yield is immediatly traded to EUR via a DEX and put through the same process.
-
-When the client desires to withdraw, we first redeem his share of USD in the yield protocol which in turn is used retreive his collateral in the lending pool. 
-
+When the client desires to withdraw, first his share of USD in the yield protocol is redeemed to the MRM smart contract, which in turn is used to redeem his share of collateral in the lending pool, which in turn is returned to him. 
+ 
 ### Disclaimer
 This is just a PoC of how to do this onchain using a lending pool. It's much more cost-efficient to hedge the currency-risk offchain using conventional financial instruments as the lending pools currently doesn't allow undercollateralized loaning options. 
 
 ### Alternative onchain solutions
-Another interesting idea to pursue is to buy perpetual futures on a DEX that offers greater leverage ratios - but that will still require us to handle liquidations due to the lack of the possibility of cross-margining it with our position. Another alternative could be to acquire DOWN / BEAR tokens for the hedge, but they only exists with 3X (targetted) leverage ratios.
+Another way to achieve onchain hedging could be to buy perpetual futures on a DEX that offers greater leverage ratios. Such solution would also require a mechanism to prevent liquidations. Alternatively, to ease the handling around liquidations, we could acquire DOWN / BEAR tokens for the hedge, but they appear to exists with no more than 3X targetted leverage.
 
 ## Technical Architecture
 The stablecoins, lending pool, DEX and yield protocol has all been mocked to ease the testing. Future work includes integrating to real tokens as well as dex, lending pool and yield protocols.
 
-### MRM
-The MRM contract pools EUR tokens from its clients and uses them for collateral in the lending pool to retrieve USD tokens. The USD tokens are then deposited in a yield protocol to earn interest which is redeemable via the MRM contract. When ever the EURUSD rate has moved 5% or sufficient interest has been accrued, an offchain oracle ensures that MRM rebalances its deposits in the lending pool to both avoid liquidations when the EURUSD rate falls and to increase the USD deposited in the yield protocol when the EURUSD rate increases.   
+### Mocked Tokens
+EUR and USD has been mocked as ERC20 tokens, see [MockEUR.sol]{https://github.com/SMLaursen/SBT/blob/main/contracts/mocks/MockEUR.sol} and [MockUSD.sol]{https://github.com/SMLaursen/SBT/blob/main/contracts/mocks/MockUSD.sol} respectively
 
-### Tokens
-EUR and USD has been mocked as ERC20 tokens, see MockEUR.sol and MockUSD.sol respectively
+### Mocked DEX
+A simplified DEX has been mocked, see [MockDEX.sol]{https://github.com/SMLaursen/SBT/blob/main/contracts/mocks/MockDEX.sol}. This DEX allows trading EUR to USD and vice versa at an exchangerate set by a contract owner's offchain oracle. 
 
-### Lending Pool
-See MockEURUSDLendingPool.sol which is a simplified lending pool, that allows borrowing USD using EUR and relies on offchain oracles to set the exchangerate.
-The utilization ratio is set to 0.85 where liquidations will happen if the ratio exceeds 0.90 effectively allowing the pool to keep the remaining 10% collateral as a fee. Notice if the utilization exceeds 1.00, the client will actually profit from being liquidated. In this mock theres no incentives for providing liquidity to the pool as well as there is no ongoing interest charged the borrower.
+### Mocked Lending Pool
+See [MockEURUSDLendingPool.sol]{https://github.com/SMLaursen/SBT/blob/main/contracts/mocks/MockEURUSDLendingPool.sol} which is a simplified lending pool, that allows borrowing USD using EUR as collateral and relies on a contract owner's offchain oracle to set the exchangerate. The healtfactor is set to 0.85 where liquidations will happen if the ratio exceeds 0.90 effectively emulating the liquidation fee. Notice if the healtfactor exceeds 1.00, the client will actually profit from being liquidated, as the borrowed value would exceed his collateral value. In this mock theres no incentives for providing liquidity to the pool as well as there is no ongoing interest charged the borrower. 
 
-### Yield Protocol
-See MockUSDYieldProtocol.sol which is a simplified yield protocol used for testing by minting and distributing yield when called from an outside oracle.
+### Mocked Yield Protocol
+See [MockUSDYieldProtocol.sol]{https://github.com/SMLaursen/SBT/blob/main/contracts/mocks/MockUSDYieldProtocol.sol} which is a simplified yield protocol used for testing by minting and distributing yield when called from an outside oracle. 
 
-### DEX
-See MockDEX.sol which is a simplified DEX allowing one to trade EUR/USD
+### Market Risk Mitigator
+The [MRM contract]{https://github.com/SMLaursen/SBT/blob/main/contracts/MarketRiskMitigator.sol} integrates to the Lending Pool, DEX and Yield protocol. It functions by pooling EUR tokens from its clients and placing them in the lending pool as collateral for borrowing USD tokens. The USD tokens are then deposited in a yield protocol to earn interest that is redeemable via the MRM contract. The contract owner's offchain oracle ensure that MRM constantly `check()` whether the healthfactor is more than 3% outside its target range (due to price movements) or whether more than 5% of the USD under management is unredeemable in the lending pool (due to yield), and thereby essentially unhedged. If so the MRM contract rebalances it's funds. 
 
-### Oracles
-* MRM relies on an oracle to invoke the `check()` function cyclically to rebalance when appropiate. This check method receives the utilization from the LendingPool instance and the accrued interest from the YieldProtocol.
+In this rather crude PoC the rebalancing is made by redeeming everything from the yield protocol then repaying the entire loan to get EUR. Any residual USD is also traded to EUR whereafter the EUR is placed anew after registrering the clients individual PnLs. 
 
-* DEX relies on an oracle to set the exchange rate for the swaps
-
-* LendingPool relies on an oracle to set the exchange rate used for calculating utilization.   
-
-* YieldProtocol relies on an oracle to model the interest
+Client withdrawals and deposits also triggers full rebalances to ensure the PnL is correctly recorded for the other clients before adjusting the EUR position. 
 
 ## Security
 This is no way battletested!
 Relying on ERC20 based EUR and USD tokens enforces us to preapprove the relevant transactions and using the Ownable modifier helps in preventing unauthorized access.
 
+## Further work
+* Attempt to interact with real 3rd party lending pools, DEXs and yield protocol.
+* Take spreads and liquidity into consideration when interacting with the DEX
+* Model interest rates in the lending pool, and take these into consideration when interacting with it.
+* Improve the MRM bookkeeping to only rebalance the necessary delta
+* ...
